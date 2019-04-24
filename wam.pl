@@ -1228,8 +1228,8 @@ get '/album' => sub {
 			push(@navi, "/album?folder=$path $subdir");
 		}
 	}
-    @sorted_dir = sort keys %FOLDS;
-    @sorted_file = sort keys %FILES;
+	@sorted_dir = sort keys %FOLDS;
+	@sorted_file = sort keys %FILES;
 	for $f (@sorted_file) {
 		$t = $FILES{$f}->{type};
 		if (app->types->type($t) =~ /image\/.*/) {
