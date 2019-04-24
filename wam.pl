@@ -1213,7 +1213,7 @@ post '/set_album' => sub {
 get '/album' => sub {
 	my $ca = shift;
 	my $folder = $ca->req->param('folder', '');
-	my (@temp, @navi, $path, $subdir, @sorted_dir, @sorted_file, $f);
+	my (@temp, @navi, $path, $subdir, @sorted_dir, @sorted_file, $f, $t);
 	$folder = &get_dir($folder);
 	@temp = split(/\//, $folder);
 	if (scalar(@temp) <= 1) {
@@ -3005,14 +3005,14 @@ $('.folder').on('mouseenter mouseleave', function() {
 % next if ($k =~ /^_.*$/);
 % $i++;
 <td style='font-size:9pt' align=center width=75>
-% $t = $$files{$k}->{type};
-% if (app->types->type($t) =~ /image\/.*/) {
+% my $ty = $$files{$k}->{type};
+% if (app->types->type($ty) =~ /image\/.*/) {
 %	my $src = "$folder/$k";
 %	$src = "$folder/tn_$k" if (-e "$folder/tn_$k");
 	<a target=_blank href="<%=url_for('/show_pic')->query([file => "$folder/$k"])%>"><img src="<%= $src %>"><br><%=$k%>
-% } elseif ($t eq 'sb') {
+% } elsif ($ty eq 'sb') {
 	<a target=_blank href="<%=url_for('/show_scratch')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><br><%=$k%>
-% } elseif ($t eq 'sb2') {
+% } elsif ($ty eq 'sb2') {
 	<a target=_blank href="<%=url_for('/show_scratch2')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><br><%=$k%>
 % } else {
 	<a target=_blank href="<%=url_for('/show_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><br><%=$k%>
