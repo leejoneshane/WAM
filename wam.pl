@@ -457,6 +457,15 @@ sub get_dir {
 			} elsif ($line =~ /.[M|m][D|d][B|b|A|a|W|w].+$/) {
 				$FILES{$line}->{type} = 'mdb';
 				$FILES{$line}->{image} = 'mdb.gif';
+			} elsif ($line =~ /.[S|s][B|b]$/) {
+				$FILES{$line}->{type} = 'sb';
+				$FILES{$line}->{image} = 'sb.gif';
+			} elsif ($line =~ /.[S|s][B|b]2$/) {
+				$FILES{$line}->{type} = 'sb2';
+				$FILES{$line}->{image} = 'sb.gif';
+			} elsif ($line =~ /.[S|s][B|b]3$/) {
+				$FILES{$line}->{type} = 'sb3';
+				$FILES{$line}->{image} = 'sb.gif';
 			}
 		}
 	}
@@ -1059,35 +1068,6 @@ get '/show_file' => sub {
 	close(REAL);
 };
 
-get '/show_pic' => sub {
-	my $ca = shift;
-	$) = 0;
-	$> = 0;
-	@MESSAGES = ();
-	my $file = $ca->req->param('file');
-	my $fsize = stat($file)->size;
-	$file =~ /.*\.(.*)$/;
-	if (!open(REAL,"<:raw $file")) {
-		push @MESSAGES, $file.app->l('Can not read the file!');
-	}
-	read(REAL, my $bytes, $fsize);
-	$ca->render(data => $bytes, format => $1);
-	close(REAL);
-};
-
-get '/show_scratch' => sub {
-	my $ca = shift;
-	$) = 0;
-	$> = 0;
-	@MESSAGES = ();
-	my $file = $ca->req->param('file');
-  	$ca->stash(file => $file);
-	$file =~ /.*\.sb(.?)$/;
-  	return $ca->render(template => 'show_scratch2') if ($1 eq '2');
-  	return $ca->render(template => 'show_scratch3') if ($1 eq '3');
-  	return $ca->render(template => 'show_scratch');
-};
-
 get '/sharemgr' => sub {
 	my $ca = shift;
 	@MESSAGES = ();
@@ -1232,7 +1212,66 @@ post '/set_album' => sub {
 
 get '/album' => sub {
 	my $ca = shift;
+	my $folder = $ca->req->param('folder', '');
+	my (@temp, @navi, $path, $subdir, @sorted_dir, @sorted_file, $f);
+	$folder = &get_dir($folder);
+	@temp = split(/\//, $folder);
+	if (scalar(@temp) <= 1) {
+		$path = '/mnt';
+		push(@navi, "/album?folder=$path 目錄");
+	} else {
+		pop(@temp);
+		$path = '';
+		foreach $subdir (@temp) {
+			next if ($subdir eq '');
+			$path .= "/$subdir";
+			push(@navi, "/album?folder=$path $subdir");
+		}
+	}
+    @sorted_dir = sort keys %FOLDS;
+    @sorted_file = sort keys %FILES;
+	for $f (@sorted_file) {
+		$t = $FILES{$f}->{type};
+		if (app->types->type($t) =~ /image\/.*/) {
+			system("convert $f -thumbnail 80x60 tn_$f") if -e $f;
+		}
+	}
+	$ca->stash(folder => $folder);
+	$ca->stash(navi => [@navi]);
+	$ca->stash(folds => {%FOLDS});
+	$ca->stash(files => {%FILES});
+	$ca->stash(sorted_folds => [@sorted_dir]);
+	$ca->stash(sorted_files => [@sorted_file]);
 } => 'album';
+
+get '/show_pic' => sub {
+	my $ca = shift;
+	$) = 0;
+	$> = 0;
+	@MESSAGES = ();
+	my $file = $ca->req->param('file');
+	my $fsize = stat($file)->size;
+	$file =~ /.*\.(.*)$/;
+	if (!open(REAL,"<:raw $file")) {
+		push @MESSAGES, $file.app->l('Can not read the file!');
+	}
+	read(REAL, my $bytes, $fsize);
+	$ca->render(data => $bytes, format => $1);
+	close(REAL);
+};
+
+get '/show_scratch' => sub {
+	my $ca = shift;
+	$) = 0;
+	$> = 0;
+	@MESSAGES = ();
+	my $file = $ca->req->param('file');
+  	$ca->stash(file => $file);
+	$file =~ /.*\.sb(.?)$/;
+  	return $ca->render(template => 'show_scratch2') if ($1 eq '2');
+  	return $ca->render(template => 'show_scratch3') if ($1 eq '3');
+  	return $ca->render(template => 'show_scratch');
+};
 
 get '/add_group' => sub {
 	my $ca = shift;
@@ -2027,8 +2066,8 @@ function snone() {
 % }
 % for my $k (@$sorted_files) {
 <tr class="cell"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
-% $k =~ /.*\.(.*)$/;
-% if (app->types->type($1) =~ /text\/.*/) {
+% $t = $$files{$k}->{type};
+% if (app->types->type($t) =~ /text\/.*/) {
 	<td><a href="<%=url_for('/edit_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><%=$k%></a></td>
 % } else {
 	<td><a target=_blank href="<%=url_for('/show_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><%=$k%></a></td>
@@ -2855,7 +2894,7 @@ function check() {
 <tr class="cell"><th align=right>
 %= label_for showdate => l('Show Created Date')
 </th><td>
-% if (config('album_showdate') == 1) {
+% if (defined(config('album_showdate'))) {
 %= check_box showdate => 1, checked => 'checked'
 % } else {
 %= check_box showdate => 1
@@ -2864,7 +2903,7 @@ function check() {
 <tr class="cell"><th align=right>
 %= label_for showsize => l('Show File Size')
 </th><td>
-% if (config('album_showsize') == 1) {
+% if (defined(config('album_showsize'))) {
 %= check_box showsize => 1, checked => 'checked'
 % } else {
 %= check_box showsize => 1
@@ -2873,7 +2912,7 @@ function check() {
 <tr class="cell"><th align=right>
 %= label_for shownew => l('Show New Tip')
 </th><td>
-% if (config('album_shownew') == 1) {
+% if (defined(config('album_shownew'))) {
 %= check_box shownew => 1, checked => 'checked'
 % } else {
 %= check_box shownew => 1
@@ -2931,16 +2970,21 @@ $('.folder').on('mouseenter mouseleave', function() {
 %= config('album_notice')
 </td></tr>
 <tr><td rowspan="<%= config('album_rowcount') %>">
-<p align=center style="font-size: -1; margin-top: 10; margin-bottom: 0">目前所在位置：<%= $nav %></p>
+<p align=center style="font-size: -1; margin-top: 10; margin-bottom: 0">目前所在位置：
+% for my $k (@$navi) {
+%	my @temp = split(/ /, $k);
+ <a href="<%= $temp[0] %>"><%= $temp[1] %></a> / 
+% }
+</p>
 <hr color=#6699cc size=1>
 </td></tr><tr>
 % my $i=0;
 % for my $k (@$sorted_folds) {
-% next if ($k eq '.' || $k eq '..');
+% next if ($k eq '.' || $k eq '..' || $k =~ /^_.*$/);
 % $i++;
 <td style='font-size:9pt' align=center width=75>
 <a class="folder" href="<%= url_with->query([folder => "$folder/$k"]) %>">
-<img id="<%= $K %>" src="img/album/folder1.gif"><br><%= $k %>
+<img id="<%= $k %>" src="img/album/folder1.gif"><br><%= $k %>
 % if (config('album_showdate')) {
 <br><%=$$folds{$k}->{modify}%>
 % }
@@ -2952,7 +2996,7 @@ $('.folder').on('mouseenter mouseleave', function() {
 <br><img src="img/album/new.gif">
 % }
 </a></td>
-% if ($i% config('album_rowcount') eq 0) {
+% if ($i % config('album_rowcount') eq 0) {
 </tr><tr>
 % }
 % }
@@ -2960,9 +3004,19 @@ $('.folder').on('mouseenter mouseleave', function() {
 % for my $k (@$sorted_files) {
 % next if ($k =~ /^_.*$/);
 % $i++;
-<tr><td style='font-size:9pt' align=center width=75>
-<a href="<%= url_with->query([folder => "$folder/$k"]) %>">
-<img id="<%= $K %>" src="img/album/folder1.gif"><br><%= $k %>
+<td style='font-size:9pt' align=center width=75>
+% $t = $$files{$k}->{type};
+% if (app->types->type($t) =~ /image\/.*/) {
+%	my $src = "$folder/$k";
+%	$src = "$folder/tn_$k" if (-e "$folder/tn_$k");
+	<a target=_blank href="<%=url_for('/show_pic')->query([file => "$folder/$k"])%>"><img src="<%= $src %>"><br><%=$k%>
+% } elseif ($t eq 'sb') {
+	<a target=_blank href="<%=url_for('/show_scratch')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><br><%=$k%>
+% } elseif ($t eq 'sb2') {
+	<a target=_blank href="<%=url_for('/show_scratch2')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><br><%=$k%>
+% } else {
+	<a target=_blank href="<%=url_for('/show_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><br><%=$k%>
+%}
 % if (config('album_showdate')) {
 <br><%=$$folds{$k}->{modify}%>
 % }
@@ -2974,10 +3028,11 @@ $('.folder').on('mouseenter mouseleave', function() {
 <br><img src="img/album/new.gif">
 % }
 </a></td>
-% if ($i% config('album_rowcount') eq 0) {
+% if ($i % config('album_rowcount') eq 0) {
 </tr><tr>
 % }
 % }
+</tr></table>
 </center>
 
 @@ show_scratch.html.ep
@@ -3196,6 +3251,9 @@ R0lGODlhEAANALMAAAAAAP//AISEhMbGxv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//
 @@ img/1folder.gif (base64)
 R0lGODlhDwANALMAAAAAAP//AISEhMbGxv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///yH5BAEAAA8ALAAAAAAPAA0AAAQz8D1BqbxYjLCHwJfGjV5lfWAqAB/pbuvXvVz80LM97zV78zkfkGTDjWKmpAnwADifUGgEADs=
 
+@@ img/sb.gif (base64)
+R0lGODlhKAAoAPeVAIaGhpmZmefn1lVVVf///8zMzE1NTTMzM3d3d+7u7ubm5ujo6KKhoTkxLLCvr19RQGldTnZVJaVvHXNuasLBwZaUlX98fYeEhVxTS+KVHX1XIfb29nBaPvmjHdyRHXpUHt6SHfCdHdmPHahwHZyam3FmWOKUHemZHZZnIHx6ejg0NZqZmXNubKNuHYWDgnx3dJ1qHXtjQubl5TIvMMzLy3VVJ3dfPYeEhNGKHXpXJfHw8Hp4eYqIiGtoaY+MjHZYL/v7+9zc3I1gHtOLHXdzb62srKGfoEY+N/j4+G5eSr5+HZKQkM3MzNHR0ZFqMHtWHk07I3NxcXNwccnIyGRhYdra2nZaMvmjHqiKXnRycm5sbOrq6pqYmD4yL1tWVvX19WlmZnJaOPvWm4F+f5mYmNvb2+Df3+3t7Xl2d3l1cuWWHf3mw9rZ2ZiWlnZ0dJWTk727vGtoaOTj42xQK/eiHfvNhXBtbv39/bGwsKSjo7Szs8jHx21RKeucIfzhttnZ2WhmZqinp7u6uo+Njd/f329nYI1gH9GtePnx5NTT08HAwMPCwoyKimlnaMbFxuDg4Hh1dnl3d4mHiLKwseXl5f///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAHoA5UALAAAAAAoACgAAAj/ACsJHEiwoMGDCBMqXMiwocOHBwFInEixIsUAEAkCEMCxo8ePHQMMyChwI4GTKFOqPBmgwMiMJlfKRBlAgEuYAmbqDEDA5kuHMXWu5NnzJtCcQocaMHCg6YGjSXciQPBzYdAECmQuYLCyQACqUE8maOBA5YIHEFbaFBn2ZAQJEyhUsHABQwYNG9QaZRiUAIcOHj6A6BBCRIcRJGTutYr0ZIkOHUycgNwBRQoVK7pWVdiXRYcWLl7AgByDgIwZNFQu5txYQY0ONk7ewNEhh44dPHqo3pwwqA/DP4DsCCKkwxAiRYwcQZJyde/GSSArWcKkiRMJT6BEkTKFShWUzhEGwbUC+QqWLFq2cOniBeUXMOB5i28cBrKYk2PIlDFzJiWa+G2loUYHa5yUAhttuLHDG3CcFAeADQUlxxx01HGSHV+cdIcdeBCQhx4Q8tUYAXvw0YcfBPwBiBGBaCEIEm8M0px8EY1IACGFGHIIInckosgijDTiiGoGtJXSIwyMAUkkkkxCiWI0GtRXVJoZSeVuVl4ZImNaQplll+HV2GWVEdpUwJlopqnmmmEaNMCbcMYp55xykmTnnXjmqeeefPaZUEAAOw==
+
 @@ img/image.gif (base64)
 R0lGODlhEQARALMAAAAAAH8AAAB/AAAAfwB/f39/fwD//7+/v////wAAAAAAAAAAAAAAAAAAAAAAAP///yH5BAEAAA8ALAAAAAARABEAAART8MlJax04ZysHL54VVsUzTudUrMDFTS01rHQB0DFq7LzA550dYQcQAIgXA+FAKAqMBqBpeagWj9FLoXpwGm0XLjfAlQ4C6LTa/JJIAfC4HN6uRwAAOw==
 
@@ -3267,3 +3325,12 @@ R0lGODlhFwAWAKIAAAcHB//PB///BzcHnzcvn4d/h8e/x////ywAAAAAFwAWAAADdHi63H7gmEmrtSXe
 
 @@ img/unused.jpg (base64)
 /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wgARCAABAB4DASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGgAB//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAEFAh//xAAUEQEAAAAAAAAAAAAAAAAAAAAQ/9oACAEDAQE/AT//xAAUEQEAAAAAAAAAAAAAAAAAAAAQ/9oACAECAQE/AT//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAY/Ah//xAAUEAEAAAAAAAAAAAAAAAAAAAAg/9oACAEBAAE/IR//2gAMAwEAAgADAAAAEAAP/8QAFBEBAAAAAAAAAAAAAAAAAAAAEP/aAAgBAwEBPxA//8QAFBEBAAAAAAAAAAAAAAAAAAAAEP/aAAgBAgEBPxA//8QAFBABAAAAAAAAAAAAAAAAAAAAIP/aAAgBAQABPxAf/9k=
+
+@@ img/album/folder1.gif (base64)
+R0lGODlhIAAgAMIAAP///8zM/5mZ/wAAAMjIyAAAACAAAAAAACH5BAEAAAQALAAAAAAgACAAAAOaSLrcvmO8SVkUIlYXpR1YBGSbcoXSKQIBWakqCrBB6z3wDFxr7bscGS0wG8x8SGADZBwinUgbLgSNWmtKE/XKTd4gmWo3mgWFx+PyGd1VG9ntL4EphkstaztZTtdb3XVwgH57S3mEIYZviBlyc4dsKBN9go0vkFeSG5RcmiWcZJYlYItJoqOkTp6oqVinrHhGq7BLTI60tbgTCQA7
+
+@@ img/album/folder2.gif (base64)
+R0lGODlhIAAgAMIAAP///8zM/5mZ/93d3aqqqoiIiAAAAMjIyCH5BAEAAAcALAAAAAAgACAAAAPXeLrcfsa8SVkUQlYX9bpYtllGGEFllnoVGGKrQRDd5r6mMQzyTFMpXG6369UmQVyESOwMCiyLUMXcFZ5YqOK0FS6r13C2AxBBXl+meM0zAAABUTBNvDrFkXdgL4dVsXkAAEuBe3waK2ptgoaCbnCGh10ZVk+PkY2YkpM6Y5CaoHEeiYCfoZhmnFZup6GpZ5SWpq2bH7E8s7QwDSWduLSGMFFnvqy6Kki3xq7IQMq5fM0tscuRwiNdndVx0ti9v8Hd2MTg1+O8KnDm5+h54uwkg8PwvPP0CwkAOw==
+
+@@ img/album/new.gif (base64)
+R0lGODlhFgAIAIcAAJXkyXjd/4u46n7R+IHL9GS4/2K0/3HR/4Pf6onh3oLf7ZHj0Hnd/Xrd+8RJqq12w75TsAwV/xcq/x84/1yq/6TorOn5KMPvcZnlwfP8FecDgZeg3Fum/4Xg5/3+Aun5KbbsitT0ULlettggkrBwwAYL/wgO/27L//X8EqrpoNn1SI2z588ynN4WjMzyX+36ItLzVfH7Go205+cEgjNe/0R9/2Kz/63qm+f5LPn9C7Ftv4TG8qSGzZ+Q0jxt/zVh/4fg4sPwcKbop7TsjmS41XHR8W7L6mTi1WLj0HHe8YPL/4nA/4LN/5G0/3rZ/yhJVEB2iC5TYAz7GBf4MB/2QFzkxKSV/+kj/8Ni/5Wu/5mn/wIDA1eguYXI//0C/+gl/7Z3/9RG/zNebBIgJT1wgQb9DAj8EG7f6vUQ/6qL/9k//7R6/2KzzxsyOQwWGcxT/+0e/9JK//gM//EX/2K00AIEBDPwbETrkGLjz62G//kK/zxtfmzG5UmGm06QpjzufjXwcFvlwcNh/6aR/4XM+3zX/YHR/GTP1WLN0HHY8YPL6onA3oLN7ZG00Hnb/XrZ+75/7ayX8pys9qic8wyQGBeYMB+dQFzJxKSVrOkjKMNicZWuyZmnwfMTFcV27I3A+VvIwIXI5/0CAuglKrZ3idRGUKWh9LqE7p6p9QaMDAiNEG7W6vUQEqqLoNk/SLR6jbSM8MxTX+0eItJKVfgMDfEXGobK+8V37DOsbES4kGLNz62Gm+cmLPkKC5e095O4+DyyfjWtcIfE4qaRpwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQECgD/ACwAAAAAFgAIAAAInwAZMBAwgAGBHQwKGFh4AEECBgoWMGggMQCDFg4YPIDAIIKECRMoVPjA4IIHABgyCAzQQsOGjR05CGTQwYMCHB9AgAjBIABLESNIQAgQoYQJEycYWLiBIoUKGENWtljBosXQCBx8WnTxAkaHHDEA9GQpQ8aMqzRq1LDB4IaHGwxw5JgZQMeOADx6BPDxo29WIEE6MBACQqvhw4bpamUQEAAh+QQECgD/ACwAAAAAFgAIAAAIlAADBCBSJIARPgGOIFmYRMmSAEyaOHEiUaCbJwGgRAkgZQoVKlWsXAmAxUsWLXMEBnCzhYtGjoFUdvHC5MsVMGvCqHQjZgyZjVLKmDFzJgCcNGjSqImzZiebNm6AxlT5Bk6cLnLmZNlJh04doHbu3METII+XPAG+6HGicg/CPn4C/AFEN2YXQV0CDGqqsq/fvmz9BgQAIfkEBQoAAAAsAgAAABQACAAACI4ACRUCUMgQgEOIEiZStAgAo0aOHkGEFAkAqkkAKFWyZOkSpkwANInaxKkTAEiePknCSOkSgJehRDEalYnUq1InTZ26mDGVKlWrAMhqxaqVq1mvTtqCBYklqJcvY8maFYpWrU1Kbd1iiStXLl0AdonaBYBXr0cWDfr6BQBYsLcuhWkKBWBYUqh4874MoDcgACH+baa5sMq1ZSBHSUYgwMmu16XRIFVsZWFkIEdJRiBBbmltYXRvciC7c6dAoUO90KjsuvSvuKFHaHR0cDovL3d3dy53ZWJ1dGlsaXRpZXMuY29tLnR3oUGo+rFvp/OmaKq6uOqwVKFDAVVTU1BDTVQAOw==
