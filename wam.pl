@@ -2066,8 +2066,8 @@ function snone() {
 % }
 % for my $k (@$sorted_files) {
 <tr class="cell"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
-% $t = $$files{$k}->{type};
-% if (app->types->type($t) =~ /text\/.*/) {
+% my $ty = $$files{$k}->{type};
+% if (app->types->type($ty) =~ /text\/.*/) {
 	<td><a href="<%=url_for('/edit_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><%=$k%></a></td>
 % } else {
 	<td><a target=_blank href="<%=url_for('/show_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><%=$k%></a></td>
