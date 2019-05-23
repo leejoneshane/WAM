@@ -3002,6 +3002,12 @@ $('.folder').on('mouseenter mouseleave', function() {
 </tr><tr>
 % }
 % }
+% if ($i % config('album_rowcount') ne 0) {
+%   $i++;
+%   for my $j ($i..config('album_rowcount')) {
+<td></td>
+%   }
+% }
 % $i=0;
 % for my $k (@$sorted_files) {
 % next if ($k =~ /^_.*$/);
