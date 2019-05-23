@@ -2970,12 +2970,13 @@ $('.folder').on('mouseenter mouseleave', function() {
 %= config('album_notice')
 </td></tr>
 <tr><td rowspan="<%= config('album_rowcount') %>">
-<p align=center style="font-size: -1; margin-top: 10; margin-bottom: 0">目前所在位置：
+<div align=center style="font-size: -1; margin-top: 10; margin-bottom: 0">目前所在位置：
 % for my $k (@$navi) {
 %	my @temp = split(/ /, $k);
  <a href="<%= $temp[0] %>"><%= $temp[1] %></a> / 
 % }
-</p>
+</div></td></tr>
+<tr><td rowspan="<%= config('album_rowcount') %>">
 <hr color=#6699cc size=1>
 </td></tr>
 <tr>
