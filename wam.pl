@@ -1321,7 +1321,7 @@ post '/add_one' => sub {
 	my $grp = $ca->req->param('grp');
 	my $aa = $ca->req->param('admin');
 	&addone($usr,$grp,$pwd);
-	&add_wam($usr) if ($aa eq 'ON');
+	&add_wam($usr) if (defined($aa) && $aa eq 'ON');
 	$ca->stash(messages => [@MESSAGES]);
 	$ca->stash(groups => [keys %AVALG]);
 } => 'add_one';
@@ -2965,7 +2965,7 @@ $('.folder').on('mouseenter mouseleave', function() {
 });
 % end
 <center>
-<table width=90% border=0 align=center>
+<table width=100% border=0 align=center>
 <tr><td rowspan="<%= config('album_rowcount') %>">
 %= config('album_notice')
 </td></tr>
@@ -2977,13 +2977,14 @@ $('.folder').on('mouseenter mouseleave', function() {
 % }
 </p>
 <hr color=#6699cc size=1>
-</td></tr><tr>
+</td></tr>
+<tr>
 % my $i=0;
 % for my $k (@$sorted_folds) {
 % next if ($k eq '.' || $k eq '..' || $k =~ /^_.*$/);
 % $i++;
 <td style='font-size:9pt' align=center width=75>
-<a class="folder" href="<%= url_with->query([folder => "$folder/$k"]) %>">
+<a class="folder" href="<%= url_with->query({folder => "$folder/$k"}) %>">
 <img id="<%= $k %>" src="img/album/folder1.gif"><br><%= $k %>
 % if (config('album_showdate')) {
 <br><%=$$folds{$k}->{modify}%>
