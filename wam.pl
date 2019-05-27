@@ -2062,7 +2062,9 @@ function snone() {
 % next if ($k eq '.' || $k eq '..');
 <tr class="folder"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
 <td><a href="<%=url_with->query([folder => "$folder/$k"])%>"><img src="/img/<%=$$folds{$k}->{image}%>"><%=$k%></a></td>
-<td align=center class="darkgreen"><%=$$folds{$k}->{type}%></td><td class="blue"><%=$$folds{$k}->{perm}%></td><td align=right><%=$$folds{$k}->{owner}%></td><td align=right><%=$$folds{$k}->{group}%></td><td align=right><%=$$folds{$k}->{size}%></td><td align=right><%=$$folds{$k}->{modify}%></td></tr>
+<td align=center class="darkgreen"><%=$$folds{$k}->{type}%></td><td class="blue"><%=$$folds{$k}->{perm}%></td>
+<td align=center><%=$$folds{$k}->{owner}%></td><td align=right><%=$$folds{$k}->{group}%></td>
+<td align=right><%=$$folds{$k}->{size}%></td><td align=right><%=$$folds{$k}->{modify}%></td></tr>
 % }
 % for my $k (@$sorted_files) {
 <tr class="cell"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
@@ -2072,7 +2074,9 @@ function snone() {
 % } else {
 	<td><a target=_blank href="<%=url_for('/show_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><%=$k%></a></td>
 %}
-<td align=center class="darkgreen"><%=$$files{$k}->{type}%></td><td align=center class="blue"><%=$$files{$k}->{perm}%></td><td align=right><%=$$files{$k}->{owner}%></td><td align=right><%=$$files{$k}->{group}%></td><td align=right><%=$$files{$k}->{size}%></td><td align=right><%=$$files{$k}->{modify}%></td></tr>
+<td align=center class="darkgreen"><%=$$files{$k}->{type}%></td><td align=center class="blue"><%=$$files{$k}->{perm}%></td>
+<td align=right><%=$$files{$k}->{owner}%></td><td align=right><%=$$files{$k}->{group}%></td>
+<td align=right><%=$$files{$k}->{size}%></td><td align=right><%=$$files{$k}->{modify}%></td></tr>
 % }
 % for (1..18 - int(keys %$folds) - int(keys %$files)) {
 <tr class="item"><td colspan=8>　</td></tr>
