@@ -2062,7 +2062,7 @@ function snone() {
 % next if ($k eq '.' || $k eq '..');
 <tr class="folder"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
 <td><a href="<%=url_with->query([folder => "$folder/$k"])%>"><img src="/img/<%=$$folds{$k}->{image}%>"><%=$k%></a></td>
-<td align=center class="darkgreen"><%=$$folds{$k}->{type}%></td><td class="blue"><%=$$folds{$k}->{perm}%></td>
+<td align=center class="darkgreen"><%=$$folds{$k}->{type}%></td><td align=center class="blue"><%=$$folds{$k}->{perm}%></td>
 <td align=center><%=$$folds{$k}->{owner}%></td><td align=right><%=$$folds{$k}->{group}%></td>
 <td align=right><%=$$folds{$k}->{size}%></td><td align=right><%=$$folds{$k}->{modify}%></td></tr>
 % }
