@@ -1153,7 +1153,7 @@ post '/add_share' =>sub {
 		$SMB{$sec}->{'recycle:repository'} = '/mnt/recycle/%u';
 	}
 	&write_smbconf;
-	system('kill -1 $(pidof smbd) && kill -1 $(pidof nmbd)');
+	system("kill -1 $(pidof smbd) && kill -1 $(pidof nmbd)");
   	push @MESSAGES, app->l('Share Folder Configure Completed!');
   	$ca->stash(messages => [@MESSAGES]);
 	$ca->stash(samba => {%SMB});
@@ -1175,7 +1175,7 @@ post '/del_share' =>sub {
 	my $sec = $ca->req->param('section');
 	delete $SMB{$sec};
 	&write_smbconf;
-	system('kill -1 $(pidof smbd) && kill -1 $(pidof nmbd)');
+	system("kill -1 $(pidof smbd) && kill -1 $(pidof nmbd)");
   	push @MESSAGES, app->l('Share Folder Cancled!');
   	$ca->stash(messages => [@MESSAGES]);
 	$ca->stash(samba => {%SMB});
