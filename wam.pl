@@ -770,7 +770,11 @@ post '/do_config' => sub {
 	$c->{nest} = $ca->req->param('nest');
 	$c->{passwd_form} = $ca->req->param('passwd_form');
 	$c->{passwd_range} = $ca->req->param('passwd_range');
-	$c->{passwd_rule} = $ca->req->param('passwd_rule1') + $ca->req->param('passwd_rule2')*2 + $ca->req->param('passwd_rule3')*4 + $ca->req->param('passwd_rule4')*8;
+	my $rule1 = $ca->req->param('passwd_rule1') || 0;
+	my $rule2 = $ca->req->param('passwd_rule2') || 0;
+	my $rule3 = $ca->req->param('passwd_rule3') || 0;
+	my $rule4 = $ca->req->param('passwd_rule4') || 0;
+	$c->{passwd_rule} = $rule1 + $rule2*2 + $rule3*4 + $rule4*8;
 	$c->{passwd_length} = $ca->req->param('passwd_length');
 	$c->{passwd_age} = $ca->req->param('passwd_age');
 	$c->{passwd_lock} = $ca->req->param('passwd_lock');
@@ -2063,7 +2067,7 @@ function snone() {
 <tr class="folder"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
 <td><a href="<%=url_with->query([folder => "$folder/$k"])%>"><img src="/img/<%=$$folds{$k}->{image}%>"><%=$k%></a></td>
 <td align=center class="darkgreen"><%=$$folds{$k}->{type}%></td><td align=center class="blue"><%=$$folds{$k}->{perm}%></td>
-<td align=center><%=$$folds{$k}->{owner}%></td><td align=right><%=$$folds{$k}->{group}%></td>
+<td align=right><%=$$folds{$k}->{owner}%></td><td align=right><%=$$folds{$k}->{group}%></td>
 <td align=right><%=$$folds{$k}->{size}%></td><td align=right><%=$$folds{$k}->{modify}%></td></tr>
 % }
 % for my $k (@$sorted_files) {
