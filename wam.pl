@@ -3138,9 +3138,9 @@ function setPlayerSize(w, h) {
 <META HTTP-EQUIV="Pargma" CONTENT="no-cache">
 <title><%=title%></title>
 %= stylesheet '/default.css'
-%= javascript 'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js'
+%= javascript '//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js'
 <!--[if IE]>  
-%= javascript 'http://html5shiv.googlecode.com/svn/trunk/html5.js'  
+%= javascript '//html5shiv.googlecode.com/svn/trunk/html5.js'  
 <![endif]-->
 </head>
 <body>
