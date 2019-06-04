@@ -40,7 +40,6 @@ use File::Basename;
 use Cwd qw(abs_path);
 
 ####################### initialzing ###########################################
-plugin SetUserGroup => {user => 'root', group => 'root'};
 my $c = plugin Config => {file => '/web/wam.conf'};
 &init_conf unless defined $c->{language};
 my $lh = WAM::I18N->get_handle($c->{language}) || die "What language?";
