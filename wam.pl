@@ -1321,7 +1321,7 @@ post '/add_one' => sub {
 	my $grp = $ca->req->param('grp');
 	my $aa = $ca->req->param('admin');
 	&addone($usr,$grp,$pwd);
-	&add_wam($usr) if ($aa eq 'ON');
+	&add_wam($usr) if (defined($aa) && $aa eq 'ON');
 	$ca->stash(messages => [@MESSAGES]);
 	$ca->stash(groups => [keys %AVALG]);
 } => 'add_one';
@@ -2062,7 +2062,9 @@ function snone() {
 % next if ($k eq '.' || $k eq '..');
 <tr class="folder"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
 <td><a href="<%=url_with->query([folder => "$folder/$k"])%>"><img src="/img/<%=$$folds{$k}->{image}%>"><%=$k%></a></td>
-<td align=center class="darkgreen"><%=$$folds{$k}->{type}%></td><td class="blue"><%=$$folds{$k}->{perm}%></td><td align=right><%=$$folds{$k}->{owner}%></td><td align=right><%=$$folds{$k}->{group}%></td><td align=right><%=$$folds{$k}->{size}%></td><td align=right><%=$$folds{$k}->{modify}%></td></tr>
+<td align=center class="darkgreen"><%=$$folds{$k}->{type}%></td><td align=center class="blue"><%=$$folds{$k}->{perm}%></td>
+<td align=center><%=$$folds{$k}->{owner}%></td><td align=right><%=$$folds{$k}->{group}%></td>
+<td align=right><%=$$folds{$k}->{size}%></td><td align=right><%=$$folds{$k}->{modify}%></td></tr>
 % }
 % for my $k (@$sorted_files) {
 <tr class="cell"><td><input type=checkbox name=sel id=sel value=<%=$k%>></td>
@@ -2072,7 +2074,9 @@ function snone() {
 % } else {
 	<td><a target=_blank href="<%=url_for('/show_file')->query([file => "$folder/$k"])%>"><img src="/img/<%=$$files{$k}->{image}%>"><%=$k%></a></td>
 %}
-<td align=center class="darkgreen"><%=$$files{$k}->{type}%></td><td align=center class="blue"><%=$$files{$k}->{perm}%></td><td align=right><%=$$files{$k}->{owner}%></td><td align=right><%=$$files{$k}->{group}%></td><td align=right><%=$$files{$k}->{size}%></td><td align=right><%=$$files{$k}->{modify}%></td></tr>
+<td align=center class="darkgreen"><%=$$files{$k}->{type}%></td><td align=center class="blue"><%=$$files{$k}->{perm}%></td>
+<td align=right><%=$$files{$k}->{owner}%></td><td align=right><%=$$files{$k}->{group}%></td>
+<td align=right><%=$$files{$k}->{size}%></td><td align=right><%=$$files{$k}->{modify}%></td></tr>
 % }
 % for (1..18 - int(keys %$folds) - int(keys %$files)) {
 <tr class="item"><td colspan=8>　</td></tr>
@@ -2965,25 +2969,27 @@ $('.folder').on('mouseenter mouseleave', function() {
 });
 % end
 <center>
-<table width=90% border=0 align=center>
+<table width=100% border=0 align=center>
 <tr><td rowspan="<%= config('album_rowcount') %>">
 %= config('album_notice')
 </td></tr>
 <tr><td rowspan="<%= config('album_rowcount') %>">
-<p align=center style="font-size: -1; margin-top: 10; margin-bottom: 0">目前所在位置：
+<div align=center style="font-size: -1; margin-top: 10; margin-bottom: 0">目前所在位置：
 % for my $k (@$navi) {
 %	my @temp = split(/ /, $k);
  <a href="<%= $temp[0] %>"><%= $temp[1] %></a> / 
 % }
-</p>
+</div></td></tr>
+<tr><td rowspan="<%= config('album_rowcount') %>">
 <hr color=#6699cc size=1>
-</td></tr><tr>
+</td></tr>
+<tr>
 % my $i=0;
 % for my $k (@$sorted_folds) {
 % next if ($k eq '.' || $k eq '..' || $k =~ /^_.*$/);
 % $i++;
 <td style='font-size:9pt' align=center width=75>
-<a class="folder" href="<%= url_with->query([folder => "$folder/$k"]) %>">
+<a class="folder" href="<%= url_with->query({folder => "$folder/$k"}) %>">
 <img id="<%= $k %>" src="img/album/folder1.gif"><br><%= $k %>
 % if (config('album_showdate')) {
 <br><%=$$folds{$k}->{modify}%>
@@ -2999,6 +3005,12 @@ $('.folder').on('mouseenter mouseleave', function() {
 % if ($i % config('album_rowcount') eq 0) {
 </tr><tr>
 % }
+% }
+% if ($i % config('album_rowcount') ne 0) {
+%   $i++;
+%   for my $j ($i..config('album_rowcount')) {
+<td></td>
+%   }
 % }
 % $i=0;
 % for my $k (@$sorted_files) {
