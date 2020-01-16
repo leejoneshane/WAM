@@ -68,11 +68,9 @@ sub init_conf {
 	$c->{nest} = 1 unless defined $c->{nest};
 	$c->{acltype} = 0 unless defined $c->{acltype};
 	$c->{acls} = '' unless defined $c->{acls};
-	if (!defined($c->{domain})) {
-	    my $domain = $ENV{'HOSTNAME'};
+	my $domain = $ENV{'HOSTNAME'};
     	$domain =~ tr/a-z/A-Z/;
     	$c->{domain} = $domain;
-	}
 	$c->{album_title} = app->l('Album') unless defined $c->{album_title};
 	$c->{album_notice} = '' unless defined $c->{album_notice};
 	$c->{album_showdate} = 1 unless defined $c->{album_showdate};
